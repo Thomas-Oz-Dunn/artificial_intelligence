@@ -23,10 +23,12 @@ class Denoise(keras.Model):
         strides=2),
       keras.layers.Conv2D(
         64, 
-        (3, 3), 
+        (3, 3), s
         activation='relu',
          padding='same', 
-         strides=2)])
+         strides=2)
+         # Final layer condense into state and covariance
+      ])
 
     self.decoder = keras.Sequential([
       keras.layers.Conv2DTranspose(

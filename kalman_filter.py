@@ -15,15 +15,15 @@ class KalmanFilter:
     """
     Kalman Filter class
     """
-    def __init__(self, mean_state, mean_cov):
+    def __init__(self, mean_state, mean_cov, transition_matrix):
         self.mean_state = mean_state
         self.mean_cov = mean_cov
-        self.transition_matrix = 
+        self.transition_matrix = transition_matrix
         self.prcx_noise_cov = np.eye(mean_state.shape() [0])
         self.input_effect = np.eye(mean_state.shape() [0])
         self.control_input = np.zeros((mean_state.shape() [0], 1))
         self.measure_matrix = 
-        self.measure_cov =        
+        self.measure_cov = 
 
     def run(
         self, 
@@ -32,13 +32,8 @@ class KalmanFilter:
         
         for i_iter in np.arange(0, n_iter):
             
-            (mean_state, mean_cov) = predict(
-                self.mean_state, 
-                self.mean_cov, 
-                self.transition_matrix, 
-                self.prcx_noise_cov, 
-                self.input_effect, 
-                self.control_input)
+            (mean_state, mean_cov) = self.predict()
+
             (mean_state, mean_cov) = update(
                 self.mean_state, 
                 self.mean_cov, 
@@ -48,26 +43,19 @@ class KalmanFilter:
         
         return (mean_state, mean_cov)
 
-def predict(
-    mean_state, 
-    mean_cov, 
-    transition_matrix, 
-    prcx_noise_cov, 
-    control_effect, 
-    control_input
-):
-    predicted_state = predict_state(
-        mean_state=mean_state,
-        transition_matrix=transition_matrix,
-        control_effect=control_effect,
-        control_input=control_input)
+    def predict(self):
+        predicted_state = predict_state(
+            mean_state=self.mean_state,
+            transition_matrix=self.transition_matrix,
+            control_effect=self.control_effect,
+            control_input=self.control_input)
 
-    predicted_covariance = predict_covariance(
-        mean_covariance=mean_cov,
-        transition_matrix=transition_matrix,
-        prcx_noise_covariance=prcx_noise_cov)
+        predicted_covariance = predict_covariance(
+            mean_covariance=self.mean_cov,
+            transition_matrix=self.transition_matrix,
+            prcx_noise_covariance=self.prcx_noise_cov)
 
-    return (predicted_state, predicted_covariance)
+        return (predicted_state, predicted_covariance)
 
 
 def predict_covariance(
