@@ -7,56 +7,85 @@ THRESHOLD = 1e-6
 
 def interact_multi_model(
     mean_state, 
-    mean_cov
+    mean_cov,
+    time_step
 ):
+    cons_vel_mat = 
+    const_vel = KalmanFilter(
+        mean_state=,
+        mean_cov=,
+        transition_matrix=
+    )
+
+    cons_acc_mat = 
+    const_acc = KalmanFilter(
+        mean_state=,
+        mean_cov=,
+        transition_matrix=
+    )
+    
+    cons_turn_mat = 
+    const_turn = KalmanFilter(
+        mean_state=,
+        mean_cov=,
+        transition_matrix=
+    )
+    
     return (mean_state, mean_cov)
 
 class KalmanFilter:
     """
     Kalman Filter class
     """
-    def __init__(self, mean_state, mean_cov, transition_matrix):
+    def __init__(
+        self, 
+        mean_state, 
+        mean_cov, 
+        transition_matrix
+    ):
         self.mean_state = mean_state
         self.mean_cov = mean_cov
         self.transition_matrix = transition_matrix
         self.prcx_noise_cov = np.eye(mean_state.shape() [0])
         self.input_effect = np.eye(mean_state.shape() [0])
         self.control_input = np.zeros((mean_state.shape() [0], 1))
-        self.measure_matrix = 
-        self.measure_cov = 
 
     def run(
         self, 
         new_measure,
-        n_iter: int = 150):
-        
+        measure_matrix,
+        measure_cov,
+        n_iter: int = 150
+    ):
         for i_iter in np.arange(0, n_iter):
-            
-            (mean_state, mean_cov) = self.predict()
+            self.predict()
+            self.update(new_measure, measure_matrix, measure_cov)
 
-            (mean_state, mean_cov) = update(
-                self.mean_state, 
-                self.mean_cov, 
-                new_measure, 
-                self.measure_matrix, 
-                self.measure_cov)
-        
-        return (mean_state, mean_cov)
-
-    def predict(self):
-        predicted_state = predict_state(
+    def predict(self) -> None:
+        self.mean_state = predict_state(
             mean_state=self.mean_state,
             transition_matrix=self.transition_matrix,
             control_effect=self.control_effect,
             control_input=self.control_input)
 
-        predicted_covariance = predict_covariance(
+        self.mean_cov = predict_covariance(
             mean_covariance=self.mean_cov,
             transition_matrix=self.transition_matrix,
             prcx_noise_covariance=self.prcx_noise_cov)
 
-        return (predicted_state, predicted_covariance)
-
+    def update(
+        self,
+        new_measure, 
+        measure_matrix, 
+        measure_cov
+    ) -> None:
+        pred_mean = np.dot(measure_matrix, self.mean_state)
+        predict_cov = measure_cov + np.dot(measure_matrix, np.dot(self.mean_cov, measure_matrix.T))
+        
+        self.kalman_gain = np.dot(self.mean_cov, np.dot(measure_matrix.T, np.linalg.inv(predict_cov)))
+        diff = (new_measure - pred_mean)
+        self.mean_state = self.mean_state + np.dot(self.kalman_gain, diff)
+        self.mean_cov = self.mean_cov - np.dot(self.kalman_gain, np.dot(predict_cov, self.kalman_gain.T))
 
 def predict_covariance(
     mean_covariance,
@@ -77,20 +106,3 @@ def predict_state(
     controls = np.dot(control_effect, control_input)
     return transition + controls
 
-
-def update(
-    mean_state, 
-    mean_cov, 
-    new_measure, 
-    measure_matrix, 
-    measure_cov
-):
-    pred_mean = np.dot(measure_matrix, mean_state)
-    predict_cov = measure_cov + np.dot(measure_matrix, np.dot(mean_cov, measure_matrix.T))
-    kalman_gain = np.dot(mean_cov, np.dot(measure_matrix.T, np.linalg.inv(predict_cov)))
-    diff = (new_measure - pred_mean)
-
-    mean_state = mean_state + np.dot(kalman_gain, diff)
-    mean_cov = mean_cov - np.dot(kalman_gain, np.dot(predict_cov, kalman_gain.T))
-
-    return (mean_state, mean_cov)
