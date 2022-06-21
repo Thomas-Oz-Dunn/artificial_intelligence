@@ -8,28 +8,41 @@ THRESHOLD = 1e-6
 def interact_multi_model(
     mean_state, 
     mean_cov,
-    time_step
+    time_step,
+    omega
 ):
-    cons_vel_mat = 
-    const_vel = KalmanFilter(
-        mean_state=,
-        mean_cov=,
-        transition_matrix=
-    )
+    cons_vel_mat = np.array([
+        [1, 0, time_step, 0],
+        [0, 1, 0, time_step],
+        [0, 0, 1, 0],
+        [0, 0, 0, 1]])
+    const_vel_KF = KalmanFilter(
+        mean_state=mean_state,
+        mean_cov=mean_cov,
+        transition_matrix=cons_vel_mat)
 
-    cons_acc_mat = 
-    const_acc = KalmanFilter(
-        mean_state=,
-        mean_cov=,
-        transition_matrix=
-    )
+    cons_acc_mat = np.array([
+        [1, 0, time_step, 0, 0.5 * time_step**2, 0],
+        [0, 1, 0, time_step, 0, 0.5 * time_step**2],
+        [0, 0, 1, 0, time_step, 0],
+        [0, 0, 0, 1, 0, time_step],
+        [0, 0, 0, 0, 1, 0],
+        [0, 0, 0, 0, 0, 1]])
+    const_acc_KF = KalmanFilter(
+        mean_state=mean_state,
+        mean_cov=mean_cov,
+        transition_matrix=cons_acc_mat)
     
-    cons_turn_mat = 
-    const_turn = KalmanFilter(
-        mean_state=,
-        mean_cov=,
-        transition_matrix=
-    )
+    cons_turn_mat = np.array([
+        [1, 0, np.sin(omega*time_step)/omega, -(1-np.cos(omega*time_step))/omega, 0],
+        [0, 1, np.cos(omega*time_step), -np.sin(omega*time_step), 0],
+        [0, 0, (1-np.cos(omega*time_step))/omega, np.sin(omega*time_step)/omega, 0],
+        [0, 0, np.sin(omega*time_step), -np.cos(omega*time_step), 0],
+        [0, 0, 0, 0, 1]])
+    const_turn_KF = KalmanFilter(
+        mean_state=mean_state,
+        mean_cov=mean_cov,
+        transition_matrix=cons_turn_mat)
     
     return (mean_state, mean_cov)
 
