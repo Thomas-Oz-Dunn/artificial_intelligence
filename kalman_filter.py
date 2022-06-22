@@ -9,8 +9,10 @@ def interact_multi_model(
     mean_state, 
     mean_cov,
     time_step,
-    omega
+    omega,
+    measurement
 ):
+    # [x_pos, y_pos, x_vel, y_vel]
     cons_vel_mat = np.array([
         [1, 0, time_step, 0],
         [0, 1, 0, time_step],
@@ -21,6 +23,7 @@ def interact_multi_model(
         mean_cov=mean_cov,
         transition_matrix=cons_vel_mat)
 
+    # [x_pos, y_pos, x_vel, y_vel, x_acc, y_acc]
     cons_acc_mat = np.array([
         [1, 0, time_step, 0, 0.5 * time_step**2, 0],
         [0, 1, 0, time_step, 0, 0.5 * time_step**2],
@@ -33,6 +36,7 @@ def interact_multi_model(
         mean_cov=mean_cov,
         transition_matrix=cons_acc_mat)
     
+    # [x_pos, y_pos, x_vel, y_vel, omega]
     cons_turn_mat = np.array([
         [1, 0, np.sin(omega*time_step)/omega, -(1-np.cos(omega*time_step))/omega, 0],
         [0, 1, np.cos(omega*time_step), -np.sin(omega*time_step), 0],
@@ -43,7 +47,36 @@ def interact_multi_model(
         mean_state=mean_state,
         mean_cov=mean_cov,
         transition_matrix=cons_turn_mat)
+
+    state_cv, cov_cv = const_vel_KF.run(
+        new_measure=measurement,
+        measure_cov=,
+        measure_matrix=)
+    state_ca, cov_ca = const_acc_KF.run(
+        new_measure=measurement,
+        measure_cov=,
+        measure_matrix=)
+    state_ct, cov_ct = const_turn_KF.run(
+        new_measure=measurement,
+        measure_cov=,
+        measure_matrix=)
     
+    # Markov Decision Process
+    # transition_prob_matrix
+    # mixing probabilties
+    # mixed estimates
+    # mixed covariance
+
+    # predict mixed estimate
+    # predict mixed covariance
+
+    # update mixed estimate
+    # update mixed covariance
+
+
+    # Model comparison based an accuracy to ground truth
+    # Apply weight to prediction for decoder
+
     return (mean_state, mean_cov)
 
 class KalmanFilter:
@@ -70,9 +103,14 @@ class KalmanFilter:
         measure_cov,
         n_iter: int = 150
     ):
-        for i_iter in np.arange(0, n_iter):
+        for _ in np.arange(0, n_iter):
             self.predict()
-            self.update(new_measure, measure_matrix, measure_cov)
+            self.update(
+                new_measure, 
+                measure_matrix, 
+                measure_cov)
+        
+        return (self.mean_state, self.mean_cov)
 
     def predict(self) -> None:
         self.mean_state = predict_state(
