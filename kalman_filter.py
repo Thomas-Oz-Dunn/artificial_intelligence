@@ -19,8 +19,8 @@ def interact_multi_model(
         [0, 0, 1, 0],
         [0, 0, 0, 1]])
     const_vel_KF = KalmanFilter(
-        mean_state=mean_state,
-        mean_cov=mean_cov,
+        state=mean_state,
+        covariance=mean_cov,
         transition_matrix=cons_vel_mat)
 
     # [x_pos, y_pos, x_vel, y_vel, x_acc, y_acc]
@@ -32,8 +32,8 @@ def interact_multi_model(
         [0, 0, 0, 0, 1, 0],
         [0, 0, 0, 0, 0, 1]])
     const_acc_KF = KalmanFilter(
-        mean_state=mean_state,
-        mean_cov=mean_cov,
+        state=mean_state,
+        covariance=mean_cov,
         transition_matrix=cons_acc_mat)
     
     # [x_pos, y_pos, x_vel, y_vel, omega]
@@ -44,8 +44,8 @@ def interact_multi_model(
         [0, 0, np.sin(omega*time_step), -np.cos(omega*time_step), 0],
         [0, 0, 0, 0, 1]])
     const_turn_KF = KalmanFilter(
-        mean_state=mean_state,
-        mean_cov=mean_cov,
+        state=mean_state,
+        covariance=mean_cov,
         transition_matrix=cons_turn_mat)
 
     state_cv, cov_cv = const_vel_KF.run(
@@ -62,17 +62,19 @@ def interact_multi_model(
         measure_matrix=)
     
     # Markov Decision Process
-    # transition_prob_matrix
-    # mixing probabilties
-    # mixed estimates
-    # mixed covariance
+    mixed_trans = 
+    mixed_state =
+    mixed_cov = 
 
-    # predict mixed estimate
-    # predict mixed covariance
+    mixed_KF = KalmanFilter(
+        mean_state=mixed_state,
+        mean_cov=mixed_cov,
+        transition_matrix=mixed_trans)
 
-    # update mixed estimate
-    # update mixed covariance
-
+    mean_state, mean_cov = mixed_KF.run(
+        new_measure=measurement,
+        measure_matrix=,
+        measure_cov=)
 
     # Model comparison based an accuracy to ground truth
     # Apply weight to prediction for decoder
@@ -81,20 +83,20 @@ def interact_multi_model(
 
 class KalmanFilter:
     """
-    Kalman Filter class
+    A class for modelling Kalman Filters
     """
     def __init__(
         self, 
-        mean_state, 
-        mean_cov, 
+        state, 
+        covariance, 
         transition_matrix
     ):
-        self.mean_state = mean_state
-        self.mean_cov = mean_cov
+        self.mean_state = state
+        self.mean_cov = covariance
         self.transition_matrix = transition_matrix
-        self.prcx_noise_cov = np.eye(mean_state.shape() [0])
-        self.input_effect = np.eye(mean_state.shape() [0])
-        self.control_input = np.zeros((mean_state.shape() [0], 1))
+        self.prcx_noise_cov = np.eye(state.shape() [0])
+        self.input_effect = np.eye(state.shape() [0])
+        self.control_input = np.zeros((state.shape() [0], 1))
 
     def run(
         self, 
@@ -130,6 +132,7 @@ class KalmanFilter:
         measure_matrix, 
         measure_cov
     ) -> None:
+
         pred_mean = np.dot(measure_matrix, self.mean_state)
         predict_cov = measure_cov + np.dot(measure_matrix, np.dot(self.mean_cov, measure_matrix.T))
         
