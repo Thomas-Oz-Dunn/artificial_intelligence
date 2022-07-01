@@ -77,8 +77,8 @@ def predict_covariance(
 def predict_state(
     state,
     transition_matrix,
-    control_effect,
-    control_input
+    control_input=np.array([0]),
+    control_effect=np.array([0])
 ):
     transition = np.dot(transition_matrix, state)
     controls = np.dot(control_effect, control_input)
