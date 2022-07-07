@@ -4,6 +4,8 @@ Interacting Multi Model
 """
 
 import numpy as np
+import typing as typing
+
 import kalman_filter as kf
 
 class InteractiveMultiModel:
@@ -12,28 +14,83 @@ class InteractiveMultiModel:
     """
     def __init__(
         self,
-        filters: kf.KalmanFilter,
-        confidences,
-        markov_transition
+        filters: typing.Iterable[kf.KalmanFilter],
+        confidences: typing.Iterable[float],
+        markov_transition: np.array
     ) -> None:
-        self.filter = filters
+        """
+        Initialize Interactive Multiple Models
+
+        Parameters
+        ----------
+        filters : kalman_filter.KalmanFilter
+            Iterable of Kalman Filter objects
+
+        confidences : float
+            Confidence in each filter
+
+        markov_transision: np.ndarray
+            Transition probability matrix between filters
+        """
+        self.filters = filters
         self.MU = confidences
         self.markov_transition = markov_transition
+        self.state = np.zeros(filters[0].state.shape)
+        self.covariance = np.zeros(filters[0].covariance.shape)
+        self.num_filters = len(filters)
+        self.omega = np.zeros([self.num_filters, self.num_filters])
+
+    def run(
+        self,
+        n_iter: int = 150
+    ) -> None:
+        for _ in range(n_iter):
+            self.predict()
+            self.update()
+
+    def predict(self) -> None:
+        """
+        Predict state in Kalman Filters
+        """
+
+    def update(
+        self, 
+        measurement
+    ) -> None:
+        """
+        Update state in Kalman Filters
+
+        Parameters
+        ----------
+        measurement: np.ndarray
+        """
+        for i_filter, filter in enumerate(self.filters):
+            filter.update(measurement)
+            self.likelihood[i_filter] = filter.likelihood
+        
+        self.compute_mixing_probabilites()
+        self.compute_state_estimate()
 
     def compute_state_estimate(self) -> None:
+        """
+        Compute IMM's mixed state estimate
+        """
+        self.state.fill(0)
         for f, mu in zip(self.filters, self.MU):
             self.state += f.state * mu
 
+        self.covariance.fill(0)
         for f, mu in zip(self.filters, self.MU):
             y = f.state - self.state
-            self.p += mu * (np.outer(y, y) + f.covariance)
+            self.covariance += mu * (np.outer(y, y) + f.covariance)
+
 
     def compute_mixing_probabilities(self) -> None:
-        N = len(self.confidences)
-        omega = np.zeros([N, N])
+        """
+        Compute Mixing Probability
+        """
         cbar = np.dot(self.confidences, self.transition)
-        for i in N:
-            for j in N:
-                omega[i, j] = self.markov_transition[i, j] * self.MU[i] / cbar[j]
-
-        return omega
+        for i in range(self.num_filters):
+            for j in range(self.num_filters):
+                self.omega[i, j] = self.markov_transition[i, j] * self.MU[i] / cbar[j]
+    
