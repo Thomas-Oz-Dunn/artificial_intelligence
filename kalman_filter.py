@@ -24,7 +24,7 @@ class KalmanFilter:
 
     def run(
         self, 
-        new_measure,
+        measurement,
         measure_matrix,
         measure_cov,
         n_iter: int = 150
@@ -32,27 +32,19 @@ class KalmanFilter:
         for _ in np.arange(0, n_iter):
             self.predict()
             self.update(
-                new_measure, 
+                measurement, 
                 measure_matrix, 
                 measure_cov)
         
         return (self.state, self.covariance)
 
     def predict(self) -> None:
-        self.state = predict_state(
-            state=self.state,
-            transition_matrix=self.transition_matrix,
-            control_effect=self.control_effect,
-            control_input=self.control_input)
-
-        self.covariance = predict_covariance(
-            mean_covariance=self.covariance,
-            transition_matrix=self.transition_matrix,
-            prcx_noise_covariance=self.prcx_noise_cov)
+        self._predict_state()
+        self._predict_covariance()
 
     def update(
         self,
-        new_measure, 
+        measurement, 
         measure_matrix, 
         measure_cov
     ) -> None:
@@ -61,26 +53,18 @@ class KalmanFilter:
         predict_cov = measure_cov + np.dot(measure_matrix, np.dot(self.covariance, measure_matrix.T))
         
         self.kalman_gain = np.dot(self.covariance, np.dot(measure_matrix.T, np.linalg.inv(predict_cov)))
-        diff = (new_measure - pred_mean)
+        diff = (measurement - pred_mean)
         self.state = self.state + np.dot(self.kalman_gain, diff)
         self.covariance = self.covariance - np.dot(self.kalman_gain, np.dot(predict_cov, self.kalman_gain.T))
 
-def predict_covariance(
-    mean_covariance,
-    transition_matrix,
-    prcx_noise_covariance
-):
-    transition_cov = np.dot(mean_covariance, transition_matrix.T)
-    return np.dot(transition_matrix, transition_cov) + prcx_noise_covariance
+
+    def _predict_covariance(self):
+        transition_cov = np.dot(self.covariance, self.transition_matrix.T)
+        self.covariance = np.dot(self.transition_matrix, transition_cov) + self.prcx_noise_covariance
 
 
-def predict_state(
-    state,
-    transition_matrix,
-    control_input=np.array([0]),
-    control_effect=np.array([0])
-):
-    transition = np.dot(transition_matrix, state)
-    controls = np.dot(control_effect, control_input)
-    return transition + controls
+    def _predict_state(self):
+        transition = np.dot(self.transition_matrix, self.state)
+        controls = np.dot(self.control_effect, self.control_input)
+        self.state = transition + controls
 
