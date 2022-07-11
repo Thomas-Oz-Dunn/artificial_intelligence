@@ -42,11 +42,23 @@ class InteractiveMultiModel:
 
     def run(
         self,
+        measurement,
         n_iter: int = 150
     ) -> None:
+        """
+        Run Model
+
+        Parameters
+        ----------
+        measurement
+            New measurement of target
+
+        n_iter
+            Number of iterations to run
+        """
         for _ in range(n_iter):
             self.predict()
-            self.update()
+            self.update(measurement=measurement)
 
     def predict(self) -> None:
         """
@@ -63,6 +75,7 @@ class InteractiveMultiModel:
         Parameters
         ----------
         measurement: np.ndarray
+            New measurement of target
         """
         for i_filter, filter in enumerate(self.filters):
             filter.update(measurement)
