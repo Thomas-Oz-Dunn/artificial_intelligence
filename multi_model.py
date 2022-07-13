@@ -46,7 +46,8 @@ class InteractiveMultiModel:
 
     def run(
         self,
-        measurement: np.array,
+        measure_state: np.array,
+        measure_cov: np.array,
         n_iter: int = 150
     ) -> None:
         """
@@ -54,7 +55,7 @@ class InteractiveMultiModel:
 
         Parameters
         ----------
-        measurement
+        measure_state
             New measurement of target
 
         n_iter
@@ -62,18 +63,21 @@ class InteractiveMultiModel:
         """
         for _ in range(n_iter):
             self.predict()
-            self.update(measurement=measurement)
+            self.update(
+                measure_state=measure_state,
+                measure_cov=measure_cov)
 
     def predict(self) -> None:
         """
         Predict state in Kalman Filters
         """
-        for i_filter, filter in enumerate(self.filters):
+        for _, filter in enumerate(self.filters):
             filter.predict()
 
     def update(
         self, 
-        measurement: np.array
+        measure_state: np.array,
+        measure_cov: np.array
     ) -> None:
         """
         Update state in Kalman Filters
@@ -84,7 +88,9 @@ class InteractiveMultiModel:
             New measurement of target
         """
         for i_filter, filter in enumerate(self.filters):
-            filter.update(measurement)
+            filter.update(
+                measure_state=measure_state,
+                measure_cov=measure_cov)
             self.likelihood[i_filter] = filter.likelihood
         
         self._compute_mixing_probabilites()
