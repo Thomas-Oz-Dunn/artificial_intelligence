@@ -1,6 +1,10 @@
 
 """
-Interacting Multi Model
+Interacting Multi Model Markov Decsion Process
+
+Usage
+-----
+import multi_model as imm
 """
 
 import numpy as np
@@ -42,7 +46,7 @@ class InteractiveMultiModel:
 
     def run(
         self,
-        measurement,
+        measurement: np.array,
         n_iter: int = 150
     ) -> None:
         """
@@ -64,10 +68,12 @@ class InteractiveMultiModel:
         """
         Predict state in Kalman Filters
         """
+        for i_filter, filter in enumerate(self.filters):
+            filter.predict()
 
     def update(
         self, 
-        measurement
+        measurement: np.array
     ) -> None:
         """
         Update state in Kalman Filters
@@ -81,10 +87,10 @@ class InteractiveMultiModel:
             filter.update(measurement)
             self.likelihood[i_filter] = filter.likelihood
         
-        self.compute_mixing_probabilites()
-        self.compute_state_estimate()
+        self._compute_mixing_probabilites()
+        self._compute_state_estimate()
 
-    def compute_state_estimate(self) -> None:
+    def _compute_state_estimate(self) -> None:
         """
         Compute IMM's mixed state estimate
         """
@@ -98,7 +104,7 @@ class InteractiveMultiModel:
             self.covariance += mu * (np.outer(y, y) + f.covariance)
 
 
-    def compute_mixing_probabilities(self) -> None:
+    def _compute_mixing_probabilities(self) -> None:
         """
         Compute Mixing Probability
         """

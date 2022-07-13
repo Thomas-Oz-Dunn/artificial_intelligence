@@ -1,10 +1,12 @@
 """
 Useful functions for Kalman Filter
+
+Usage
+-----
+import kalman_filter as kf
 """
+
 import numpy as np
-
-THRESHOLD = 1e-6
-
 class KalmanFilter:
     """
     A class for modelling Kalman Filters
@@ -24,6 +26,7 @@ class KalmanFilter:
             Vector describing initial state
 
         covariance
+            Covariance of state vector
 
         transition_matrix
             Transformation of state during timestep
@@ -34,12 +37,12 @@ class KalmanFilter:
         self.prcx_noise_cov = np.eye(state_vec.shape() [0])
         self.input_effect = np.eye(state_vec.shape() [0])
         self.control_input = np.zeros((state_vec.shape() [0], 1))
+        self.measurement_matrix = np.zeros()
 
     def run(
         self, 
-        measurement,
-        measure_matrix,
-        measure_cov,
+        measure_state: np.array,
+        measure_cov: np.array,
         n_iter: int = 150
     ):
         """
@@ -47,14 +50,19 @@ class KalmanFilter:
 
         Parameters
         ----------
-        measurement
+        measure_state
+            measured state vector
 
+        measure_cov
+            measured covariancee
+
+        n_iter
+            number of iterations to run
         """
         for _ in np.arange(0, n_iter):
             self.predict()
             self.update(
-                measurement, 
-                measure_matrix, 
+                measure_state, 
                 measure_cov)
         
         return (self.state, self.covariance)
@@ -68,24 +76,25 @@ class KalmanFilter:
 
     def update(
         self,
-        measurement, 
-        measure_matrix, 
-        measure_cov
+        measure_state: np.array, 
+        measure_cov: np.array
     ) -> None:
         """
         Update model with new measurement
 
         Parameters
         ----------
-        measurement
+        measure_state
+            Measured state vector
 
+        measure_cov
+            Measured covariance
         """
-
-        pred_mean = np.dot(measure_matrix, self.state)
-        predict_cov = measure_cov + np.dot(measure_matrix, np.dot(self.covariance, measure_matrix.T))
+        pred_mean = np.dot(self.measure_matrix, self.state)
+        predict_cov = measure_cov + np.dot(self.measure_matrix, np.dot(self.covariance, self.measure_matrix.T))
         
-        self.kalman_gain = np.dot(self.covariance, np.dot(measure_matrix.T, np.linalg.inv(predict_cov)))
-        diff = (measurement - pred_mean)
+        self.kalman_gain = np.dot(self.covariance, np.dot(self.measure_matrix.T, np.linalg.inv(predict_cov)))
+        diff = (measure_state - pred_mean)
         self.state = self.state + np.dot(self.kalman_gain, diff)
         self.covariance = self.covariance - np.dot(self.kalman_gain, np.dot(predict_cov, self.kalman_gain.T))
 

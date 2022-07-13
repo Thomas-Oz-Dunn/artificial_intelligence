@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import keras
 
 import kalman_filter as kf
+import multi_model as imm
 
 # %% Autoencoder
 class Denoise(keras.Model):
@@ -31,6 +32,7 @@ class Denoise(keras.Model):
       ])
 
     self.decoder = keras.Sequential([
+      # First layer operate on state and covariance
       keras.layers.Conv2DTranspose(
         64, 
         kernel_size=3, 
@@ -51,10 +53,19 @@ class Denoise(keras.Model):
 
   def call(self, x):
     encoded = self.encoder(x)
-    # Insert IMM here
-    # Input R, process covariance, and x, the measurement
-    kf.interact_multi_model(encoded)
-    decoded = self.decoder(encoded)
+    const_vel = kf.KalmanFilter()
+    const_acc = kf.KalmanFilter()
+    const_turn = kf.KalmanFilter()
+    filters = [const_vel, const_acc, const_turn]
+
+    multi_model = imm.InteractiveMultiModel(
+      filters=filters,
+      confidences=,
+      markov_transition=)
+
+    multi_model.run()
+
+    decoded = self.decoder(multi_model.state, multi_model.covariance)
     return decoded
 
 autoencoder = Denoise()
